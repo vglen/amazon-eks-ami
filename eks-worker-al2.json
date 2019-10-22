@@ -1,15 +1,13 @@
 {
   "variables": {
-    "aws_region": "us-west-2",
+    "aws_region": "us-east-2",
     "ami_name": null,
     "creator": "{{env `USER`}}",
     "encrypted": "false",
     "kms_key_id": "",
-    
     "aws_access_key_id": "{{env `AWS_ACCESS_KEY_ID`}}",
     "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
     "aws_session_token": "{{env `AWS_SESSION_TOKEN`}}",
-
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
     "kubernetes_version": null,
@@ -17,22 +15,18 @@
     "docker_version": "18.06",
     "cni_version": "v0.6.0",
     "cni_plugin_version": "v0.7.5",
-
     "source_ami_id": "",
     "source_ami_owners": "137112412989",
     "source_ami_filter_name": "amzn2-ami-minimal-hvm-*",
     "arch": null,
     "instance_type": null,
     "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image",
-
     "ssh_interface": "",
     "ssh_username": "ec2-user",
-    "temporary_security_group_source_cidrs": "",
-    "associate_public_ip_address": "",
-    "subnet_id": ""
-
+    "temporary_security_group_source_cidrs": "208.137.6.245/32",
+    "associate_public_ip_address": "true",
+    "subnet_id": "subnet-0684a62830cf5a2e8"
   },
-
   "builders": [
     {
       "type": "amazon-ebs",
@@ -46,7 +40,9 @@
           "state": "available",
           "virtualization-type": "hvm"
         },
-        "owners": [ "{{user `source_ami_owners`}}" ],
+        "owners": [
+          "{{user `source_ami_owners`}}"
+        ],
         "most_recent": true
       },
       "instance_type": "{{user `instance_type`}}",
@@ -58,7 +54,7 @@
           "delete_on_termination": true
         }
       ],
-      "ami_block_device_mappings": [    
+      "ami_block_device_mappings": [
         {
           "device_name": "/dev/xvda",
           "volume_type": "gp2",
@@ -74,27 +70,28 @@
       "encrypt_boot": "{{user `encrypted`}}",
       "kms_key_id": "{{user `kms_key_id`}}",
       "run_tags": {
-          "creator": "{{user `creator`}}"
+        "creator": "{{user `creator`}}"
       },
       "subnet_id": "{{user `subnet_id`}}",
       "tags": {
-          "Name": "{{user `ami_name`}}",
-          "created": "{{timestamp}}",
-          "docker_version": "{{ user `docker_version`}}",
-          "source_ami_id": "{{ user `source_ami_id`}}",
-          "kubernetes": "{{ user `kubernetes_version`}}/{{ user `kubernetes_build_date` }}/bin/linux/{{ user `arch` }}",
-          "cni_version": "{{ user `cni_version`}}",
-          "cni_plugin_version": "{{ user `cni_plugin_version`}}"
+        "Name": "{{user `ami_name`}}",
+        "created": "{{timestamp}}",
+        "docker_version": "{{ user `docker_version`}}",
+        "source_ami_id": "{{ user `source_ami_id`}}",
+        "kubernetes": "{{ user `kubernetes_version`}}/{{ user `kubernetes_build_date` }}/bin/linux/{{ user `arch` }}",
+        "cni_version": "{{ user `cni_version`}}",
+        "cni_plugin_version": "{{ user `cni_plugin_version`}}"
       },
       "ami_name": "{{user `ami_name`}}",
       "ami_description": "{{ user `ami_description` }}, (k8s: {{ user `kubernetes_version`}}, docker:{{ user `docker_version`}})"
     }
   ],
-
   "provisioners": [
     {
       "type": "shell",
-      "inline": ["mkdir -p /tmp/worker/"]
+      "inline": [
+        "mkdir -p /tmp/worker/"
+      ]
     },
     {
       "type": "file",
@@ -116,6 +113,10 @@
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}"
       ]
+    },
+    {
+      "type": "ansible",
+      "playbook_file": "ansible/al2.yaml"
     }
   ],
   "post-processors": [
